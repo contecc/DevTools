@@ -1,0 +1,47 @@
+<#
+UPLOAD MANUAL
+ 
+1) Open Site Assets (aka. SiteAssets) in Explorer View
+2) Copy the Contents *inside* the Branding MCIA folder
+3) Copy the MCIA_Forest.spcolor file to the 15 Root (Themes)
+ 
+ 
+#UPLOAD  AUTOMATED # Need to Add Recursion Here
+#Uploads a folder of Files to SharePoint
+function UploadFilesToSharePoint([string] $siteCollectionUrl, [string] $libraryName, [string] $BrandingFilesLocation){
+ 
+    $spSourceWeb = Get-SPWeb $siteCollectionUrl
+    $spSourceList = $spSourceWeb.Lists[$libraryName]
+    
+    if($spSourceList -eq $null)
+    {
+        Write-Host "The Library $libraryName could not be found."
+        return;
+    }
+ 
+    $files = ([System.IO.DirectoryInfo] (Get-Item $BrandingFilesLocation)).GetFiles()
+    foreach($file in $files)
+    {
+        #Open file
+        $fileStream = ([System.IO.FileInfo] (Get-Item $file.FullName)).OpenRead()
+ 
+        #Add file
+        $folder =  $spSourceWeb.getfolder($libraryName)
+ 
+        Write-Host -ForegroundColor Yellow  "Copying file $file to $libraryName..."
+ 
+        $spFile = $folder.Files.Add($folder.Url + "/" + $file.Name, [System.IO.Stream]$fileStream, $true)
+ 
+        #Close file stream
+        $fileStream.Close();
+    }
+    $spSourceWeb.dispose();
+ 
+    Write-Host -ForegroundColor Cyan "Files have been uploaded to $libraryName."
+ 
+}
+ 
+#Upload Branding Assets to SharePoint
+UploadFilesToSharePoint $siteCollectionUrl $libraryName $BrandingFilesLocation
+#>
+ 
